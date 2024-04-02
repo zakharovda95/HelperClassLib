@@ -1,15 +1,11 @@
-﻿
+﻿using ExtensionHelpers;
 
 namespace ExceptionHelpers;
 
-public struct GenericCustomException
+public readonly struct GenericCustomException(short code, string title, string message, Exception innerException)
 {
-    public GenericCustomException(GECodeEnum errorData, Exception innerException, string message)
-    {
-        Message = message;
-    }
-    
-    public short Code { get; init; }
-    public string Message { get; init; }
-    public Exception? InnerException { get; init; }
+    public short Code { get; init; } = code;
+    public string Title { get; init; } = title;
+    public string Message { get; init; } = message;
+    public Exception? InnerException { get; init; } = innerException;
 }
