@@ -10,8 +10,17 @@ namespace TgBotHelpers;
 
 public static class Messages
 {
-    public static async Task<GenericReturnResult<Message?>> SendText(ITelegramBotClient client, Update update,
-        CancellationToken ctoken, string message, bool reply = false)
+    public static async Task<GenericReturnResult<Message?>> SendText(
+        ITelegramBotClient client,
+        Update update,
+        CancellationToken ctoken,
+        string message,
+        ReplyKeyboardMarkup? replyKeyboard = null,
+        InlineKeyboardMarkup? inlineKeyboard = null,
+        bool deleteKeyboard = false,
+        bool reply = false,
+        bool htmlMode = false
+    )
     {
         try
         {
@@ -27,12 +36,23 @@ public static class Messages
                 };
             }
 
+            object? replyMarkup;
+
+            if (inlineKeyboard != null)
+                replyMarkup = inlineKeyboard;
+            else if (replyKeyboard != null)
+                replyMarkup = replyKeyboard;
+            else if (deleteKeyboard)
+                replyMarkup = new ReplyKeyboardRemove();
+            else replyMarkup = null;
+
             var result = await client.SendTextMessageAsync(
                 chatId: chatId,
                 text: message,
                 cancellationToken: ctoken,
+                replyMarkup: replyMarkup as IReplyMarkup,
                 replyToMessageId: reply ? null : update.Message?.MessageId,
-                parseMode: ParseMode.Markdown
+                parseMode: htmlMode ? ParseMode.Html : ParseMode.Markdown
             );
 
             return new GenericReturnResult<Message?>
@@ -56,12 +76,20 @@ public static class Messages
             };
         }
     }
-    public static async Task<GenericReturnResult<Message?>> SendReplyKeyboard(ITelegramBotClient client, Update update,
-        CancellationToken ctoken, string message, ReplyKeyboardMarkup keyboard, bool reply = false)
+
+    public static async Task<GenericReturnResult<Message?>> EditText(
+        ITelegramBotClient client,
+        Update update,
+        CancellationToken ctoken,
+        string message,
+        InlineKeyboardMarkup? inlineKeyboard = null,
+        bool htmlMode = false
+    )
     {
         try
         {
             var chatId = update.Message?.Chat.Id ?? update.CallbackQuery?.From.Id;
+            var textMessageId = update.CallbackQuery?.Message?.MessageId ?? update.CallbackQuery?.Message?.MessageId;
 
             if (chatId == null)
             {
@@ -73,107 +101,23 @@ public static class Messages
                 };
             }
 
-            var result = await client.SendTextMessageAsync(
-                chatId: chatId,
-                text: message,
-                cancellationToken: ctoken,
-                replyToMessageId: reply ? null : update.Message?.MessageId,
-                replyMarkup: keyboard,
-                parseMode: ParseMode.Html
-            );
-
-            return new GenericReturnResult<Message?>
-            {
-                IsSuccess = true,
-                Title = GRMessages.BotSuccessSending.GetDisplayName(),
-                Message = GRMessages.BotSuccessSending.GetDisplayDescription(),
-                Data = result
-            };
-        }
-        catch (Exception e)
-        {
-            return new GenericReturnResult<Message?>
-            {
-                IsSuccess = false,
-                Exception = new GenericCustomException(
-                    code: (short)GECodeEnum.BotWrongSending.GetDisplayOder(),
-                    title: GECodeEnum.BotWrongSending.GetDisplayName(),
-                    message: GECodeEnum.BotWrongSending.GetDisplayDescription(),
-                    innerException: e)
-            };
-        }
-    }
-    
-    public static async Task<GenericReturnResult<Message?>> SendInlineKeyboard(ITelegramBotClient client, Update update,
-        CancellationToken ctoken, string message, InlineKeyboardMarkup keyboard, bool reply = false)
-    {
-        try
-        {
-            var chatId = update.Message?.Chat.Id ?? update.CallbackQuery?.From.Id;
-
-            if (chatId == null)
+            if (textMessageId == null)
             {
                 return new GenericReturnResult<Message?>
                 {
                     IsSuccess = false,
-                    Title = GRMessages.NoChatId.GetDisplayName(),
-                    Message = GRMessages.NoChatId.GetDisplayDescription()
+                    Title = GRMessages.NoMessageId.GetDisplayName(),
+                    Message = GRMessages.NoMessageId.GetDisplayDescription()
                 };
             }
 
-            var result = await client.SendTextMessageAsync(
+            var result = await client.EditMessageTextAsync(
                 chatId: chatId,
+                messageId: (int)textMessageId,
                 text: message,
                 cancellationToken: ctoken,
-                replyToMessageId: reply ? null : update.Message?.MessageId,
-                replyMarkup: keyboard,
-                parseMode: ParseMode.Html
-            );
-
-            return new GenericReturnResult<Message?>
-            {
-                IsSuccess = true,
-                Title = GRMessages.BotSuccessSending.GetDisplayName(),
-                Message = GRMessages.BotSuccessSending.GetDisplayDescription(),
-                Data = result
-            };
-        }
-        catch (Exception e)
-        {
-            return new GenericReturnResult<Message?>
-            {
-                IsSuccess = false,
-                Exception = new GenericCustomException(
-                    code: (short)GECodeEnum.BotWrongSending.GetDisplayOder(),
-                    title: GECodeEnum.BotWrongSending.GetDisplayName(),
-                    message: GECodeEnum.BotWrongSending.GetDisplayDescription(),
-                    innerException: e)
-            };
-        }
-    }
-    public static async Task<GenericReturnResult<Message?>> RemoveKeyboard(ITelegramBotClient client, Update update,
-        CancellationToken ctoken, string message, bool reply = false)
-    {
-        try
-        {
-            var chatId = update.Message?.Chat.Id ?? update.CallbackQuery?.From.Id;
-
-            if (chatId == null)
-            {
-                return new GenericReturnResult<Message?>
-                {
-                    IsSuccess = false,
-                    Title = GRMessages.NoChatId.GetDisplayName(),
-                    Message = GRMessages.NoChatId.GetDisplayDescription()
-                };
-            }
-
-            var result = await client.SendTextMessageAsync(
-                chatId: chatId,
-                text: message,
-                cancellationToken: ctoken,
-                replyToMessageId: reply ? null : update.Message?.MessageId,
-                replyMarkup: new ReplyKeyboardRemove()
+                replyMarkup: inlineKeyboard,
+                parseMode: htmlMode ? ParseMode.Html : ParseMode.Markdown
             );
 
             return new GenericReturnResult<Message?>

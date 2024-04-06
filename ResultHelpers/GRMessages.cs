@@ -10,6 +10,7 @@ public enum GRMessages
     BotSuccessSending,
     [Display(Name = "TgBot: Отсутствует ID чата", Description = "Не получилось получить ID чата")]
     NoChatId,
-
+    [Display(Name = "TgBot: Отсутствует ID сообщения", Description = "Не получилось получить ID сообщения")]
+    NoMessageId,
     #endregion
 }
