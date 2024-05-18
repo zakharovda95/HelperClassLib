@@ -7,7 +7,7 @@ namespace TgBotHelpers.System;
 
 public static class ErrorManager
 {
-    public static GenericResult GetError(ErrorEnum errorType)
+    public static GenericResult? GetError(ErrorEnum errorType)
     {
         var result = errorType switch
         {
@@ -29,7 +29,7 @@ public static class ErrorManager
                 Title = ErrorEnum.NoMessageId.GetDisplayName(),
                 Message = ErrorEnum.NoMessageId.GetDisplayDescription(),
             },
-            _ => new GenericResultExtending<Message?>()
+            _ => null
         };
 
         return result;
